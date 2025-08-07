@@ -9,7 +9,9 @@ const api = axios.create({
     'Content-Type': 'application/json',
   },
     params: {
-    key: baseKEY
+    key: baseKEY,
+    dateFrom: '2025-08-07',
+    limit: 20
   },
 })
 

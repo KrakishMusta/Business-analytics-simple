@@ -17,21 +17,21 @@ const routes = [
   },
     { 
       path: '/orders', 
-      component: () => import('../pages/Sales.vue'),
+      component: () => import('../pages/Orders.vue'),
       meta: { 
         title: 'Заказы'
       }
   },
     { 
       path: '/stocks', 
-      component: () => import('../pages/Sales.vue'),
+      component: () => import('../pages/Stocks.vue'),
       meta: { 
         title: 'Склады'
       }
   },
     { 
       path: '/incomes', 
-      component: () => import('../pages/Sales.vue'),
+      component: () => import('../pages/Incomes.vue'),
       meta: { 
         title: 'Доходы'
       }
