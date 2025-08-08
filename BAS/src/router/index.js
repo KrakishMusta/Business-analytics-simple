@@ -2,42 +2,45 @@ import { createRouter, createWebHistory } from 'vue-router'
 
 const routes = [
   { 
-      path: '/welcome', 
+      path: '/',
+      name: 'welcome',
       component: () => import('../pages/Welcome.vue'),
       meta: { 
         title: 'Стратовая страница'
       }
   },
     { 
-      path: '/sales', 
+      path: '/sales',
+      name: 'sales',
       component: () => import('../pages/Sales.vue'),
       meta: { 
         title: 'Продажи'
       }
   },
     { 
-      path: '/orders', 
+      path: '/orders',
+      name: 'orders',
       component: () => import('../pages/Orders.vue'),
       meta: { 
         title: 'Заказы'
       }
   },
     { 
-      path: '/stocks', 
+      path: '/stocks',
+      name: 'stocks',
       component: () => import('../pages/Stocks.vue'),
       meta: { 
         title: 'Склады'
       }
   },
     { 
-      path: '/incomes', 
+      path: '/incomes',
+      name: 'incomes',
       component: () => import('../pages/Incomes.vue'),
       meta: { 
         title: 'Доходы'
       }
   },
-
-
 ]
 
 const router = createRouter({

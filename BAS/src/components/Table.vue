@@ -22,6 +22,13 @@
         return !isNaN(parseFloat(value)) && isFinite(value);
     };
 
+    const formatValue = (value, column) => {
+        if (column.formatter) {
+            return column.formatter(value)
+        }
+        return value === null || value === undefined ? '' : value
+    }
+
     const sort = (field) => {
         emit('sort', field)
     }
@@ -50,7 +57,7 @@
           <!-- {{ data }} -->
           <tr class="table-row" v-for="(item, index) in data" :key="`${item.nm_id}_${index}`">
             <td :class="{ 'text-center': isNumeric(item[column.key]), 'table-cell-custom': true }" v-for="column in columns" :key="column.key">
-              {{ item[column.key] }}
+              {{ formatValue(item[column.key], column) }}
             </td>
           </tr>
         </tbody>
@@ -58,9 +65,9 @@
     </div>
 
     <div v-if="loading">Loading...</div>
-    <div v-if="error">{{ error }}</div>
+    <div class=" text-cyan-950 py-4" v-if="error">{{ error }}</div>
 
-    <div class="flex flex-row w-full justify-between text-cyan-950">
+    <div class="flex flex-row w-full justify-between mt-6 text-cyan-950">
         <div class="pagination-container">
             <div class="pagination-buttons">
               <button
@@ -71,7 +78,7 @@
                     'w-fit px-3': index === 0 || index === pagination.links.length - 1,
                     'w-8': index > 0 && index < pagination.links.length - 1,
                     'bg-indigo-200 cursor-default bg': link.active,
-                    'cursor-pointer': !link.active
+                    'cursor-pointer hover:bg-indigo-100 disabled:bg-transparent': !link.active
                   },
                     'h-8 flex items-center justify-center rounded-full disabled:opacity-50 disabled:cursor-default'
                   ]"
@@ -118,7 +125,7 @@
 
 
         .pagination-container {
-            @apply flex flex-col sm:flex-row justify-between items-center gap-4 mt-6;
+            @apply flex flex-col sm:flex-row justify-between items-center gap-4;
         }
 
         .pagination-buttons {

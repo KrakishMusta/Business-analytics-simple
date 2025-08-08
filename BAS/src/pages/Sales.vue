@@ -1,20 +1,25 @@
 
 <script setup>
-    import { onMounted } from 'vue';
+    import { onMounted, watch } from 'vue';
     import usePaginatedTable from '@/composables/usePaginatedTable';
-    import { fetchStocks } from '@/assets/utils/apis/stocksAPI';
+    import { fetchMethod } from '@/assets/utils/apis/salesAPI';
     import TableWithPagination from '@/components/Table.vue';
+
+    const props = defineProps({
+      startDate: String,
+      endDate: String
+    });
 
     const columns = [
       {
         key: 'g_number',
         title: 'Номер заказа',
-        formatter: (value) => value || '—',
+        formatter: (value) => value || '',
       },
       {
         key: 'date',
         title: 'Дата заказа',
-        formatter: (value) => value ? new Date(value).toLocaleDateString('ru-RU') : '—',
+        formatter: (value) => value ? new Date(value).toLocaleDateString('ru-RU') : '',
       },
       {
         key: 'supplier_article',
@@ -27,17 +32,17 @@
       {
         key: 'barcode',
         title: 'Штрихкод',
-        formatter: (value) => value ? String(value).replace(/(\d{4})(\d{4})(\d{4})/, '$1 $2 $3') : '—',
+        formatter: (value) => value ? String(value).replace(/(\d{4})(\d{4})(\d{4})/, '$1 $2 $3') : '',
       },
       {
         key: 'total_price',
         title: 'Общая цена',
-        formatter: (value) => value ? `${parseFloat(value).toFixed(2)} ₽` : '—',
+        formatter: (value) => value ? `${parseFloat(value).toFixed(2)}` : '',
       },
       {
         key: 'discount_percent',
-        title: 'Скидка %',
-        formatter: (value) => value ? `${value}%` : '0%',
+        title: 'Скидка',
+        formatter: (value) => value ? `${value}` : '',
       },
       {
         key: 'warehouse_name',
@@ -50,7 +55,7 @@
       {
         key: 'nm_id',
         title: 'Артикул WB',
-        formatter: (value) => value?.toString() || '—',
+        formatter: (value) => value?.toString() || '',
       },
       {
         key: 'subject',
@@ -67,12 +72,12 @@
       {
         key: 'finished_price',
         title: 'Финальная цена',
-        formatter: (value) => value ? `${parseFloat(value).toFixed(2)} ₽` : '—',
+        formatter: (value) => value ? `${parseFloat(value).toFixed(2)}` : '',
       },
       {
         key: 'for_pay',
         title: 'К оплате',
-        formatter: (value) => value ? `${parseFloat(value).toFixed(2)} ₽` : '—',
+        formatter: (value) => value ? `${parseFloat(value).toFixed(2)}` : '',
       },
       {
         key: 'is_realization',
@@ -82,7 +87,7 @@
       {
         key: 'spp',
         title: 'СПП',
-        formatter: (value) => value ? `${value}%` : '—',
+        formatter: (value) => value ? `${value}` : '',
       },
       {
         key: 'country_name',
@@ -107,7 +112,12 @@
       sortDirection,
       fetchData,
       sort
-    } = usePaginatedTable(fetchStocks);
+    } = usePaginatedTable(fetchMethod);
+
+    watch([() => props.startDate, () => props.endDate], () => {
+      console.log('Отслеживание изменения дат')
+      fetchData(1);
+    });
 
     onMounted(() => {
       fetchData();

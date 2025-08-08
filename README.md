@@ -9,3 +9,4 @@
 * Tailwindcss 4.1.11
 * Vue Router 4.5.1
 * Axios 1.11.0
+* vueuse/core 13.6.0

@@ -10,7 +10,7 @@ const api = axios.create({
   },
     params: {
     key: baseKEY,
-    dateFrom: '2025-08-07',
+    // dateFrom: '2025-08-07',
     limit: 20
   },
 })

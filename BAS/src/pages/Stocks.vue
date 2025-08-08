@@ -1,20 +1,25 @@
 
 <script setup>
-    import { onMounted } from 'vue';
+    import { onMounted, watch } from 'vue';
     import usePaginatedTable from '@/composables/usePaginatedTable';
-    import { fetchStocks } from '@/assets/utils/apis/stocksAPI';
+    import { fetchMethod } from '@/assets/utils/apis/stocksAPI';
     import TableWithPagination from '@/components/Table.vue';
+
+    const props = defineProps({
+      startDate: String,
+      endDate: String
+    });
 
     const columns = [
       { 
         key: 'date', 
         title: 'Дата',
-        formatter: (value) => value ? new Date(value).toLocaleDateString() : '—'
+        formatter: (value) => value ? new Date(value).toLocaleDateString() : ''
       },
       { 
         key: 'last_change_date', 
         title: 'Дата изменения',
-        formatter: (value) => value ? new Date(value).toLocaleString() : '—'
+        formatter: (value) => value ? new Date(value).toLocaleString() : ''
       },
       { 
         key: 'supplier_article', 
@@ -27,13 +32,13 @@
       { 
         key: 'barcode', 
         title: 'Штрихкод',
-        formatter: (value) => value ? String(value).replace(/(\d{4})(\d{4})(\d{4})/, '$1 $2 $3') : '—'
+        formatter: (value) => value ? String(value).replace(/(\d{4})(\d{4})(\d{4})/, '$1 $2 $3') : ''
       },
       { 
         key: 'quantity', 
         title: 'Количество',
         align: 'right',
-        formatter: (value) => value?.toLocaleString() ?? '0'
+        formatter: (value) => value?.toLocaleString() ?? ''
       },
       { 
         key: 'is_supply', 
@@ -49,7 +54,7 @@
         key: 'quantity_full', 
         title: 'Полное кол-во',
         align: 'right',
-        formatter: (value) => value?.toLocaleString() ?? '—'
+        formatter: (value) => value?.toLocaleString() ?? ''
       },
       { 
         key: 'warehouse_name', 
@@ -59,18 +64,18 @@
         key: 'in_way_to_client', 
         title: 'В пути к клиенту',
         align: 'right',
-        formatter: (value) => value?.toLocaleString() ?? '—'
+        formatter: (value) => value?.toLocaleString() ?? ''
       },
       { 
         key: 'in_way_from_client', 
         title: 'В пути от клиента',
         align: 'right',
-        formatter: (value) => value?.toLocaleString() ?? '—'
+        formatter: (value) => value?.toLocaleString() ?? ''
       },
       { 
         key: 'nm_id', 
         title: 'ID WB',
-        formatter: (value) => value?.toLocaleString() ?? '—'
+        formatter: (value) => value?.toLocaleString() ?? ''
       },
       { 
         key: 'subject', 
@@ -87,19 +92,19 @@
       { 
         key: 'sc_code', 
         title: 'Код поставщика',
-        formatter: (value) => value?.toLocaleString() ?? '—'
+        formatter: (value) => value?.toLocaleString() ?? ''
       },
       { 
         key: 'price', 
         title: 'Цена',
         align: 'right',
-        formatter: (value) => value ? `${parseFloat(value).toLocaleString('ru-RU')} ₽` : '—'
+        formatter: (value) => value ? `${parseFloat(value).toLocaleString('ru-RU')}` : ''
       },
       { 
         key: 'discount', 
         title: 'Скидка',
         align: 'right',
-        formatter: (value) => value ? `${parseFloat(value).toLocaleString('ru-RU')}%` : '0%'
+        formatter: (value) => value ? `${parseFloat(value).toLocaleString('ru-RU')}` : ''
       }
     ];
 
@@ -112,7 +117,12 @@
       sortDirection,
       fetchData,
       sort
-    } = usePaginatedTable(fetchStocks);
+    } = usePaginatedTable(fetchMethod);
+
+    watch([() => props.startDate, () => props.endDate], () => {
+      console.log('Отслеживание изменения дат')
+      fetchData(1);
+    });
 
     onMounted(() => {
       fetchData();

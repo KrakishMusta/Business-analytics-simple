@@ -1,13 +1,13 @@
-import { ref, computed } from 'vue'
+import { ref } from 'vue';
+import { useStorage } from '@vueuse/core';
+import { debounce } from 'lodash';
 
 export default function usePaginatedTable(apiFunction) {
-  const tableData = ref([])
-  // const originalData = ref([])
-  // const sortedData = ref([])
-  const loading = ref(false)
-  const error = ref(null)
-  const sortField = ref(null)
-  const sortDirection = ref('asc')
+  const tableData = ref([]);
+  const loading = ref(false);
+  const error = ref(null);
+  const sortField = ref(null);
+  const sortDirection = ref('asc');
   
   const pagination = ref({
     current_page: 1,
@@ -15,79 +15,99 @@ export default function usePaginatedTable(apiFunction) {
     total: 0,
     last_page: 1,
     links: []
-  })
+  });
 
-  // const paginatedData = computed(() => {
-  //   const start = (pagination.value.current_page - 1) * pagination.value.per_page
-  //   const end = start + pagination.value.per_page
-  //   console.log(sortedData.value.slice(start, end), sortedData)
-  //   return sortedData.value.slice(start, end)
-  // })
+  const storedDates = useStorage('dates', { start: '', end: '' });
 
-  const fetchData = async (page = 1) => {
-    console.log('Fetching page:', page);
+  const fetchData = debounce(async (page = 1) => {
     try {
-      loading.value = true
-      const response = await apiFunction({ page })
-      tableData.value = [...response.data];
-      
-      pagination.value = {
-        current_page: response.meta.current_page,
-        per_page: parseInt(response.meta.per_page),
-        total: response.meta.total,
-        last_page: response.meta.last_page,
-        links: response.meta.links
+      loading.value = true;
+      console.log('Fetching page:', page);
+      console.log('Stored dates:', storedDates.value);
+      const params = {
+        page: page,
+        dateFrom: storedDates.value.start || '',
+        dateTo: storedDates.value.end || ''
+      };
+      console.log('fetchData params:', params);
+      const response = await apiFunction(params);
+      console.log('API Response:', response);
+
+      if (
+        response.data &&
+        'data' in response.data &&
+        'links' in response.data &&
+        'meta' in response.data
+      ) {
+        console.log('Assigning data:', response.data.data);
+        tableData.value = Array.isArray(response.data.data) ? response.data.data : [];
+        pagination.value = {
+          current_page: response.data.meta.current_page || 1,
+          per_page: parseInt(response.data.meta.per_page) || 10,
+          total: response.data.meta.total || 0,
+          last_page: response.data.meta.last_page || 1,
+          links: Array.isArray(response.data.meta.links) ? response.data.meta.links : []
+        };
+        error.value = response.data.data.length === 0 ? 'Нет записей с текущими фильтрами даты.' : null;
+        console.log('Request URL:', `${response.config.url}?${new URLSearchParams(response.config.params).toString()}`);
+      } else {
+        console.error('Invalid API response structure:', response.data);
+        tableData.value = [];
+        error.value = 'Некорректная структура ответа от API.';
       }
+
       if (sortField.value) {
-        applySort(sortField.value, sortDirection.value)
+        applySort(sortField.value, sortDirection.value);
       }
     } catch (err) {
-      error.value = err.message
+      console.error('Error fetching data:', err);
+      error.value = err.message;
     } finally {
-      loading.value = false
+      loading.value = false;
+      console.log('Final tableData:', tableData.value);
     }
-  }
+  }, 300);
 
   const applySort = (field, direction) => {
     tableData.value.sort((a, b) => {
-      let valueA = a[field]
-      let valueB = b[field]
+      let valueA = a[field];
+      let valueB = b[field];
       
-      if (valueA == null || valueA === '') return 1
-      if (valueB == null || valueB === '') return -1
+      if (valueA == null || valueA === '') return 1;
+      if (valueB == null || valueB === '') return -1;
       
       if (!isNaN(valueA) && !isNaN(valueB)) {
-        valueA = parseFloat(valueA)
-        valueB = parseFloat(valueB)
-        return direction === 'asc' ? valueA - valueB : valueB - valueA
+        valueA = parseFloat(valueA);
+        valueB = parseFloat(valueB);
+        return direction === 'asc' ? valueA - valueB : valueB - valueA;
       }
       
       if (typeof valueA === 'string' && typeof valueB === 'string') {
         return direction === 'asc' 
           ? valueA.localeCompare(valueB) 
-          : valueB.localeCompare(valueA)
+          : valueB.localeCompare(valueA);
       }
       
       if (valueA instanceof Date && valueB instanceof Date) {
         return direction === 'asc' 
           ? valueA.getTime() - valueB.getTime()
-          : valueB.getTime() - valueA.getTime()
+          : valueB.getTime() - valueA.getTime();
       }
       
-      return 0
-    })
-  }
+      return 0;
+    });
+  };
 
   const sort = (field) => {
     if (sortField.value === field) {
-      sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc'
+      sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc';
     } else {
-      sortField.value = field
-      sortDirection.value = 'asc'
+      sortField.value = field;
+      sortDirection.value = 'asc';
     }
     
-    applySort(sortField.value, sortDirection.value)
-  }
+    applySort(sortField.value, sortDirection.value);
+  };
 
   return {
     data: tableData,
@@ -98,5 +118,5 @@ export default function usePaginatedTable(apiFunction) {
     sortDirection,
     fetchData,
     sort
-  }
+  };
 }
