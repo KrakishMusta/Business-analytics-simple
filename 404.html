@@ -1,14 +1,21 @@
 <!DOCTYPE html>
-<html>
+<html lang="">
   <head>
-    <meta charset="utf-8">
-    <title>Redirecting...</title>
-    <script>
-      sessionStorage.redirect = location.pathname;
-    </script>
-    <meta http-equiv="refresh" content="0;URL='/Business-analytics-simple/'">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+    <title>Vite App</title>
+    <script type="module" crossorigin src="/Business-analytics-simple/assets/main-C7py3a-u.js"></script>
+    <link rel="stylesheet" crossorigin href="/Business-analytics-simple/assets/main-CgGnHBsb.css">
   </head>
   <body>
-    Redirecting...
+    <div id="app"></div>
+    <script>
+        const redirect = sessionStorage.redirect;
+        delete sessionStorage.redirect;
+        if (redirect && redirect !== location.pathname) {
+          history.replaceState(null, null, redirect);
+        }
+    </script>
   </body>
 </html>
