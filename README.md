@@ -10,3 +10,5 @@
 * Vue Router 4.5.1
 * Axios 1.11.0
 * vueuse/core 13.6.0
+* vue-lodash 2.1.2
+* vite-plugin-vue-devtools 8.0.0
