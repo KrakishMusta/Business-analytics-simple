@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const baseURL = 'https://business-analytics-simple.project-zero-one01.workers.dev' + import.meta.env.VITE_API_URL;
+const baseURL = import.meta.env.VITE_API_URL;
 const baseKEY = import.meta.env.VITE_API_KEY;
 
 const api = axios.create({
