@@ -26,5 +26,9 @@ export default defineConfig({
         404: resolve(__dirname, '404.html'),
       }
     }
+  },
+  server: {
+    host: '0.0.0.0', // это важно
+    port: 5173
   }
 })

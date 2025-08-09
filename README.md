@@ -5,7 +5,7 @@
 
 ## Стек
 * Vue 3.5.18
-* Charts.js
+* Charts.js 4.5.0
 * Tailwindcss 4.1.11
 * Vue Router 4.5.1
 * Axios 1.11.0

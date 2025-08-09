@@ -3,6 +3,7 @@
     import { useRouter, useRoute } from 'vue-router';
     import { useStorage } from '@vueuse/core';
     import MasterMenu from './components/MasterMenu.vue';
+    import DataGraph from './components/DataGraph.vue';
     import DateInput from './components/DateInput.vue';
     import { setDefaultDatesForRoute } from './assets/utils/dateHelper.js';
 
@@ -90,6 +91,7 @@
 
 <template>
     <MasterMenu/>
+    <!-- <DataGraph/> -->
     <div class="wrapper">
         <div class="header-container">
             <button class="table-setting-btn bg-indigo-200 hover:bg-indigo-100 hover:cursor-cell">
@@ -105,16 +107,16 @@
                         :disabled="route.name === 'stocks'"
                         v-model="startDate"
                         placeholder="От yyyy-mm-dd"
-                        @update:modelValue="handleDateChange"
-                    />
+                        />
+                        <!-- @update:modelValue="handleDateChange" -->
                 </div>
                 <div v-if="route.name !== 'stocks'" class="flex">
                     <span class=" self-center">До</span>
                     <DateInput
                         v-model="endDate"
                         placeholder="До yyyy-mm-dd"
-                        @update:modelValue="handleDateChange"
-                    />
+                        />
+                        <!-- @update:modelValue="handleDateChange" -->
                 </div>
             </div>
         </div>

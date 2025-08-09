@@ -44,8 +44,8 @@
               class="table-cell-custom"
               v-for="column in columns" 
               :key="column.key"
-              @click="sort(column.key)"
-            >
+              >
+              <!-- @click="sort(column.key)" -->
               {{ column.title }}
               <span v-if="sortField === column.key">
                 {{ sortDirection === 'asc' ? '↑' : '↓' }}
@@ -91,6 +91,8 @@
         </div>
         <span class=" content-center opacity-50">{{pagination.total}}</span>
     </div>
+
+    <button>Отобразить график отсортированного поля</button>
   </div>
 </template>
 <style lang="css" scoped>
