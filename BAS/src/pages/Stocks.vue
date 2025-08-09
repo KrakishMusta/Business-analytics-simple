@@ -1,14 +1,8 @@
 
 <script setup>
     import { onMounted, watch } from 'vue';
-    import usePaginatedTable from '@/composables/usePaginatedTable';
     import { fetchMethod } from '@/assets/utils/apis/stocksAPI';
-    import TableWithPagination from '@/components/Table.vue';
-
-    const props = defineProps({
-      startDate: String,
-      endDate: String
-    });
+    import DataView from '../components/DataView.vue';
 
     const columns = [
       { 
@@ -107,38 +101,11 @@
         formatter: (value) => value ? `${parseFloat(value).toLocaleString('ru-RU')}` : ''
       }
     ];
-
-    const {
-      data: tableData,
-      loading,
-      error,
-      pagination,
-      sortField,
-      sortDirection,
-      fetchData,
-      sort
-    } = usePaginatedTable(fetchMethod);
-
-    watch([() => props.startDate, () => props.endDate], () => {
-      console.log('Отслеживание изменения дат')
-      fetchData(1);
-    });
-
-    onMounted(() => {
-      fetchData();
-    });
 </script>
 <template>
-  <TableWithPagination
-    :data="tableData"
-    :loading="loading"
-    :error="error"
-    :pagination="pagination"
-    :sort-field="sortField"
-    :sort-direction="sortDirection"
+  <DataView
+    :fetch-method="fetchMethod"
     :columns="columns"
-    @page-change="fetchData"
-    @sort="sort"
   />
 </template>
 <style lang="css" scoped>

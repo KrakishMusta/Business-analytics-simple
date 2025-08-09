@@ -1,4 +1,6 @@
 <script setup>
+    import svgFilterIcon from './svgFilterIcon.vue'
+
     const props = defineProps({
         data: Array,
         loading: Boolean,
@@ -35,21 +37,26 @@
 </script>
 
 <template>
-  <div>
     <div class="table-container">
       <table class="table-auto text-cyan-950 py-6">
         <thead class="w-[100%] h-8 cursor-default">
           <tr class="table-row">
             <th
-              class="table-cell-custom"
-              v-for="column in columns" 
-              :key="column.key"
+                class="table-cell-custom"
+                v-for="column in columns" 
+                :key="column.key"
               >
               <!-- @click="sort(column.key)" -->
-              {{ column.title }}
-              <span v-if="sortField === column.key">
-                {{ sortDirection === 'asc' ? '↑' : '↓' }}
+              <span class=" flex justify-between">
+                <span>{{ column.title }}</span>
+
+                <!-- <span><svg-filter-icon/></span> -->
+                <span v-if="sortField === column.key">
+                  {{ sortDirection === 'asc' ? '↑' : '↓' }}
+                </span>
+
               </span>
+
             </th>
           </tr>
         </thead>
@@ -93,7 +100,6 @@
     </div>
 
     <button>Отобразить график отсортированного поля</button>
-  </div>
 </template>
 <style lang="css" scoped>
     @import "tailwindcss";

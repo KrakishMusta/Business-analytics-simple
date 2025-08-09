@@ -1,11 +1,11 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue'
-import Chart from 'chart.js/auto'
+  import { ref, onMounted, watch } from 'vue'
+  import Chart from 'chart.js/auto'
 
-const props = defineProps({
-  data: Array,
-  field: String // Поле для анализа (например, 'quantity' или 'total_price')
-})
+  const props = defineProps({
+    data: Array,
+    field: String // Поле для анализа (например, 'quantity' или 'total_price')
+  })
 
 const chartCanvas = ref(null)
 let chartInstance = null
