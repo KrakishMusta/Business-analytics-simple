@@ -4,7 +4,7 @@
 
   const props = defineProps({
     data: Array,
-    field: String // Поле для анализа (например, 'quantity' или 'total_price')
+    field: Array // Поле для анализа (например, 'quantity' или 'total_price')
   })
 
 const chartCanvas = ref(null)

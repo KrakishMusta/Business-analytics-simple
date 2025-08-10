@@ -31,7 +31,7 @@
 </script>
 
 <template>
-    <div>
+    <div class="flex">
         <input
             v-model="dateValue"
             class="date-input"
@@ -39,7 +39,7 @@
             :disabled="disabled"
             :placeholder="placeholder"
         />
-        <span v-if="disabled" class=" inline-flex items-center h-full font-bold">Состояние доступно только на текущую дату.</span>
+        <span v-if="disabled" class="self-center font-bold">Состояние доступно только на текущую дату.</span>
     </div>
 </template>
 

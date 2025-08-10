@@ -98,8 +98,6 @@
         </div>
         <span class=" content-center opacity-50">{{pagination.total}}</span>
     </div>
-
-    <button>Отобразить график отсортированного поля</button>
 </template>
 <style lang="css" scoped>
     @import "tailwindcss";
