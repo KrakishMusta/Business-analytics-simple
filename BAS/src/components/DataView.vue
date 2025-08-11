@@ -28,7 +28,6 @@
       sort
     } = usePaginatedTable(props.fetchMethod);
 
-
     const router = useRouter();
     const route = useRoute();
     const title = computed(() => router.currentRoute.value.meta.title)
@@ -38,6 +37,26 @@
 
     const startDate = ref(storedDates.value.start);
     const endDate = ref(storedDates.value.end);
+
+
+    // Создаем реактивный ключ для localStorage
+    const storageKey = ref(route.name || 'default');
+    
+    // Создаем useFullDataLoader с текущим ключом
+    const { allData, filteredData, applyFilters, loadAllData, isLoading: fullDataLoading, progress, error: fullDataError } = useFullDataLoader(props.fetchMethod, storageKey.value);
+
+    // Состояние для отслеживания процесса применения фильтров
+    const isApplyingFilters = ref(false);
+
+
+    // Исключаем поле date из фильтров для страницы stocks
+    const filterableColumns = computed(() => {
+        if (route.name === 'stocks') {
+            return props.columns.filter(column => column.key !== 'date');
+        }
+        return props.columns;
+    });
+
 
     const setDates = (isInit = false) => {
         if(isInit)
@@ -75,8 +94,71 @@
         filtersRef.value.changeOpen(true)
     }
 
+    // Метод для применения фильтров
+    const applyFiltersToData = async () => {
+        console.log('=== НАЧАЛО ПРИМЕНЕНИЯ ФИЛЬТРОВ ===');
+        console.log('Текущий маршрут:', route.name);
+        console.log('Текущие даты:', { start: startDate.value, end: endDate.value });
+        
+        isApplyingFilters.value = true;
+        
+        try {
+            // 1. Загружаем все данные если не загружены
+            
+            if (!allData.value || allData.value.length === 0) {
+                console.log('Данные не загружены, начинаем загрузку всех данных...');
+                await loadAllData();
+                console.log('Загрузка завершена. Загружено записей:', allData.value?.length || 0);
+            } else {
+                console.log('allData', allData.value)
+                console.log('Данные уже загружены из localStorage. Количество записей:', allData.value.length);
+                console.log('Источник: useStorage автоматически восстановил данные из кэша');
+            }
+            
+            // 2. Получаем фильтры из localStorage
+            const filtersStorage = useStorage('business-analytics-filters', {});
+            console.log('Применяемые фильтры:', filtersStorage.value);
+            
+            // 3. Применяем фильтры
+            console.log('Применяем фильтры к данным...');
+            applyFilters(filtersStorage.value);
+            
+            console.log('Фильтры применены успешно');
+            console.log('Отфильтрованные данные:', filteredData.value);
+            
+            // 4. НЕ закрываем модальное окно автоматически
+            // filtersRef.value.changeOpen(false);
+            console.log('Модальное окно фильтров остается открытым для отображения прогресса');
+            
+        } catch (error) {
+            console.error('Ошибка при применении фильтров:', error);
+        } finally {
+            isApplyingFilters.value = false;
+            console.log('=== ЗАВЕРШЕНИЕ ПРИМЕНЕНИЯ ФИЛЬТРОВ ===');
+        }
+    }
+
+    // Метод для закрытия модального окна фильтров
+    const closeFiltersModal = () => {
+        console.log('Закрытие модального окна фильтров');
+        filtersRef.value.changeOpen(false);
+    }
+
+    // Метод для принудительной перезагрузки данных
+    const reloadData = async () => {
+        console.log('=== ПРИНУДИТЕЛЬНАЯ ПЕРЕЗАГРУЗКА ДАННЫХ ===');
+        
+        // Очищаем кэшированные данные
+        const { clearData } = useFullDataLoader(props.fetchMethod, storageKey.value);
+        clearData();
+        
+        // Загружаем данные заново
+        await applyFiltersToData();
+    }
+
     watch(() => route.name, (newName, oldName) => {
         console.log(`Маршрут изменён: ${oldName} -> ${newName}`)
+        storageKey.value = newName || 'default';
         setDates(true)
     }, { immediate: true });
 
@@ -103,7 +185,14 @@
     /> -->
     <Filters
         ref="filtersRef"
-        :fields="columns"
+        :fields="filterableColumns"
+        :is-loading="fullDataLoading || isApplyingFilters"
+        :progress="progress"
+        :error="fullDataError"
+        :has-cached-data="allData && allData.length > 0"
+        @apply-filters="applyFiltersToData"
+        @close-modal="closeFiltersModal"
+        @reload-data="reloadData"
     />
     <div class="flex flex-col px-5 sm:px-10 md:px-8 lg:px-10 box-border mt-10 w-full max-w-screen-2xl mx-auto">
         <div class="flex flex-col md:flex-row gap-6 md:gap-12 items-start md:items-center mb-6 text-cyan-950">

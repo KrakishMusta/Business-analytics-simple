@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Структура объекта фильтров</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .structure-diagram {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 40px;
+        }
+
+        .storage-container {
+            background: #f8fafc;
+            border: 3px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            min-width: 600px;
+        }
+
+        .storage-title {
+            background: #3b82f6;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .filters-object {
+            background: #f1f5f9;
+            border: 2px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .field-key {
+            background: #10b981;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            font-weight: bold;
+            display: inline-block;
+        }
+
+        .field-object {
+            background: #fef3c7;
+            border: 2px solid #f59e0b;
+            border-radius: 6px;
+            padding: 12px;
+            margin-left: 20px;
+        }
+
+        .field-properties {
+            margin-bottom: 10px;
+        }
+
+        .property {
+            background: #dbeafe;
+            border: 1px solid #3b82f6;
+            border-radius: 4px;
+            padding: 6px 10px;
+            margin: 5px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+
+        .filter-items-array {
+            background: #fce7f3;
+            border: 2px solid #ec4899;
+            border-radius: 6px;
+            padding: 10px;
+            margin-left: 20px;
+        }
+
+        .array-item {
+            background: #fdf2f8;
+            border: 1px solid #f472b6;
+            border-radius: 4px;
+            padding: 8px;
+            margin: 5px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+
+        .code-example {
+            background: #1e293b;
+            color: #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            overflow-x: auto;
+        }
+
+        .code-comment {
+            color: #64748b;
+        }
+
+        .code-key {
+            color: #93c5fd;
+        }
+
+        .code-value {
+            color: #fbbf24;
+        }
+
+        .code-string {
+            color: #86efac;
+        }
+
+        .info-section {
+            background: #f0f9ff;
+            border-left: 4px solid #0ea5e9;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .info-section h3 {
+            color: #0c4a6e;
+            margin-bottom: 10px;
+        }
+
+        .info-section ul {
+            margin-left: 20px;
+        }
+
+        .info-section li {
+            margin: 5px 0;
+            color: #0f172a;
+        }
+
+        .flow-diagram {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 30px 0;
+            padding: 20px;
+            background: #f8fafc;
+            border-radius: 10px;
+        }
+
+        .flow-step {
+            text-align: center;
+            flex: 1;
+            padding: 15px;
+        }
+
+        .flow-step-icon {
+            width: 60px;
+            height: 60px;
+            background: #3b82f6;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+            color: white;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .flow-arrow {
+            font-size: 2rem;
+            color: #64748b;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Структура объекта фильтров</h1>
+            <p>Визуализация хранения фильтров в localStorage</p>
+        </div>
+
+        <div class="content">
+            <div class="structure-diagram">
+                <div class="storage-container">
+                    <div class="storage-title">
+                        localStorage.getItem('business-analytics-filters')
+                    </div>
+                    
+                    <div class="filters-object">
+                        <div class="field-key">quantity</div>
+                        <div class="field-object">
+                            <div class="field-properties">
+                                <div class="property">fieldKey: "quantity"</div>
+                                <div class="property">filterItems: []</div>
+                            </div>
+                            <div class="filter-items-array">
+                                <div class="array-item">{ text: "100" }</div>
+                                <div class="array-item">{ text: "200" }</div>
+                                <div class="array-item">{ text: "500" }</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="filters-object">
+                        <div class="field-key">total_price</div>
+                        <div class="field-object">
+                            <div class="field-properties">
+                                <div class="property">fieldKey: "total_price"</div>
+                                <div class="property">filterItems: []</div>
+                            </div>
+                            <div class="filter-items-array">
+                                <div class="array-item">{ text: "1000" }</div>
+                                <div class="array-item">{ text: "2500" }</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="filters-object">
+                        <div class="field-key">product_name</div>
+                        <div class="field-object">
+                            <div class="field-properties">
+                                <div class="property">fieldKey: "product_name"</div>
+                                <div class="property">filterItems: []</div>
+                            </div>
+                            <div class="filter-items-array">
+                                <div class="array-item">{ text: "Laptop" }</div>
+                                <div class="array-item">{ text: "Phone" }</div>
+                                <div class="array-item">{ text: "Tablet" }</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="code-example">
+<span class="code-comment">// Структура объекта в localStorage</span>
+<span class="code-key">const</span> filtersStorage = {
+    <span class="code-key">quantity</span>: {
+        <span class="code-key">fieldKey</span>: <span class="code-string">"quantity"</span>,
+        <span class="code-key">filterItems</span>: [
+            { <span class="code-key">text</span>: <span class="code-string">"100"</span> },
+            { <span class="code-key">text</span>: <span class="code-string">"200"</span> },
+            { <span class="code-key">text</span>: <span class="code-string">"500"</span> }
+        ]
+    },
+    <span class="code-key">total_price</span>: {
+        <span class="code-key">fieldKey</span>: <span class="code-string">"total_price"</span>,
+        <span class="code-key">filterItems</span>: [
+            { <span class="code-key">text</span>: <span class="code-string">"1000"</span> },
+            { <span class="code-key">text</span>: <span class="code-string">"2500"</span> }
+        ]
+    },
+    <span class="code-key">product_name</span>: {
+        <span class="code-key">fieldKey</span>: <span class="code-string">"product_name"</span>,
+        <span class="code-key">filterItems</span>: [
+            { <span class="code-key">text</span>: <span class="code-string">"Laptop"</span> },
+            { <span class="code-key">text</span>: <span class="code-string">"Phone"</span> },
+            { <span class="code-key">text</span>: <span class="code-string">"Tablet"</span> }
+        ]
+    }
+}
+            </div>
+
+            <div class="flow-diagram">
+                <div class="flow-step">
+                    <div class="flow-step-icon">1</div>
+                    <h4>Инициализация</h4>
+                    <p>Создание структуры для каждого поля</p>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step">
+                    <div class="flow-step-icon">2</div>
+                    <h4>Добавление фильтра</h4>
+                    <p>Пользователь вводит значение</p>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step">
+                    <div class="flow-step-icon">3</div>
+                    <h4>Сохранение</h4>
+                    <p>Добавление в filterItems</p>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step">
+                    <div class="flow-step-icon">4</div>
+                    <h4>Синхронизация</h4>
+                    <p>Обновление localStorage</p>
+                </div>
+            </div>
+
+            <div class="info-section">
+                <h3>Ключевые особенности структуры:</h3>
+                <ul>
+                    <li><strong>Ключ localStorage:</strong> 'business-analytics-filters'</li>
+                    <li><strong>Структура по полям:</strong> Каждое поле аналитики имеет свой ключ</li>
+                    <li><strong>Объект поля:</strong> Содержит fieldKey и массив filterItems</li>
+                    <li><strong>Элементы фильтра:</strong> Простые объекты с полем text</li>
+                    <li><strong>Автосохранение:</strong> Используется useStorage из VueUse</li>
+                    <li><strong>Реактивность:</strong> Изменения автоматически синхронизируются</li>
+                </ul>
+            </div>
+
+            <div class="info-section">
+                <h3>Операции с фильтрами:</h3>
+                <ul>
+                    <li><strong>Добавление:</strong> handleAddFilterItem() - добавляет новый элемент в filterItems</li>
+                    <li><strong>Удаление:</strong> handleRemoveFilterItem() - удаляет элемент по id</li>
+                    <li><strong>Инициализация:</strong> При монтировании создается структура для всех полей</li>
+                    <li><strong>Синхронизация:</strong> watch() отслеживает изменения в localStorage</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

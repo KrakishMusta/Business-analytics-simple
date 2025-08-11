@@ -17,6 +17,11 @@
     const filtersStorage = useStorage('business-analytics-filters', {})
 
     const addFilter = () => {
+        console.log('=== ДОБАВЛЕНИЕ ФИЛЬТРА ===');
+        console.log('Поле:', props.field, 'Ключ:', props.fieldKey);
+        console.log('Текущее значение input:', inputValue.value);
+        console.log('Текущие фильтры в localStorage:', filtersStorage.value);
+        
         const trimmedValue = inputValue.value.trim();
         if (trimmedValue) {
             // Проверяем, есть ли уже фильтр с таким текстом
@@ -26,33 +31,52 @@
                     text: trimmedValue
                 }
                 filterItems.value.push(newItem)
+                console.log('Добавлен новый фильтр:', newItem);
+                console.log('Обновленный список фильтров:', filterItems.value);
+                
                 emit('addFilterItem', {
                     fieldKey: props.fieldKey,
                     filterItem: newItem
                 })
+            } else {
+                console.log('Фильтр с таким текстом уже существует:', trimmedValue);
             }
             inputValue.value = ''
+        } else {
+            console.log('Пустое значение, фильтр не добавлен');
         }
     }
 
     const handleKeydown = (event) => {
         if (event.key === 'Enter') {
+            console.log('Нажата клавиша Enter, добавляем фильтр');
             addFilter()
         }
     }
 
     const handleBlur = () => {
+        console.log('Потеря фокуса input, добавляем фильтр');
         addFilter()
     }
 
     const removeFilter = (itemId) => {
-        const index = filterItems.value.findIndex(item => item.id === itemId)
+        console.log('=== УДАЛЕНИЕ ФИЛЬТРА ===');
+        console.log('Поле:', props.field, 'Ключ:', props.fieldKey);
+        console.log('Удаляемый фильтр:', itemId);
+        console.log('Текущие фильтры:', filterItems.value);
+        
+        const index = filterItems.value.findIndex(item => item.text === itemId)
         if (index !== -1) {
             const removedItem = filterItems.value.splice(index, 1)[0]
+            console.log('Удален фильтр:', removedItem);
+            console.log('Обновленный список фильтров:', filterItems.value);
+            
             emit('removeFilterItem', {
                 fieldKey: props.fieldKey,
                 filterItem: removedItem
             })
+        } else {
+            console.log('Фильтр для удаления не найден:', itemId);
         }
     }
 
@@ -66,34 +90,42 @@
     }, { deep: true })
 
     onMounted(() => {
+        console.log('=== ИНИЦИАЛИЗАЦИЯ FilterRow ===');
+        console.log('Поле:', props.field, 'Ключ:', props.fieldKey);
+        console.log('Фильтры в localStorage:', filtersStorage.value);
+        
         if (filtersStorage.value[props.fieldKey] && filtersStorage.value[props.fieldKey].filterItems) {
             filterItems.value = [...filtersStorage.value[props.fieldKey].filterItems]
+            console.log('Загружены существующие фильтры:', filterItems.value);
+        } else {
+            console.log('Существующих фильтров не найдено');
         }
     })
 </script>
 <template>
-    <div class="bg-indigo-200 rounded">
+    <div class="bg-indigo-200 rounded h-fit">
         <p class="px-2 py-2 truncate">{{field}}</p>
     </div>
-    <div class="col-2 flex">
+    <div class="col-2 flex gap-2">
         <div v-if="filterItems.length > 0" class="flex flex-wrap gap-1">
             <div 
                 v-for="item in filterItems" 
-                :key="item.id"
+                :key="item.text"
                 class="flex items-center gap-1 bg-indigo-100 px-2 py-1 rounded text-sm"
             >
                 <span>{{ item.text }}</span>
                 <button 
-                    @click="removeFilter(item.id)"
-                    class="text-indigo-600 hover:text-indigo-800 text-xs"
+                    @click.stop="removeFilter(item.text)"
+                    class="text-indigo-950 hover:text-white text-xs"
                 >
                     ×
                 </button>
             </div>
         </div>
         <input
+            v-model="inputValue"
             type="text" 
-            class="max-w-min px-3 py-1 border border-gray-300 rounded self-center"
+            class="self-start max-w-min px-3 py-2 border border-gray-300 rounded"
             :placeholder="`Добавить`"
             @keydown="handleKeydown"
             @blur="handleBlur"

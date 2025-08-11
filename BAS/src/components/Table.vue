@@ -1,5 +1,6 @@
 <script setup>
     import svgFilterIcon from './svgFilterIcon.vue'
+    import { useStorage } from '@vueuse/core';
 
     const props = defineProps({
         data: Array,
