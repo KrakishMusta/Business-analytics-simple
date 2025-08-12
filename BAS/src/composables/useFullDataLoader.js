@@ -1,193 +1,160 @@
 // composables/useFullDataLoader.js
-import { ref, computed } from 'vue';
-import { useStorage } from '@vueuse/core';
-import { debounce } from 'lodash';
+import { ref, computed } from 'vue'
+import { useStorage } from '@vueuse/core'
+import { debounce } from 'lodash'
+import { useTableStore } from '@/stores/tableStore'
 
-export default function useFullDataLoader(apiFunction, storageKey = 'fullData') {
-  console.log('=== ИНИЦИАЛИЗАЦИЯ useFullDataLoader ===');
-  console.log('Storage key:', storageKey);
-  
-  const allData = useStorage(storageKey, []);
-  const filteredData = useStorage(`${storageKey}-filtered-data`, {
-    data: [],
-    meta: { current_page: 1, per_page: 20, total: 0, last_page: 1 }
-  });
-  
-  console.log('Данные загружены из localStorage:', {
-    allDataLength: allData.value.length,
-    filteredDataLength: filteredData.value.data.length,
-    storageKey
-  });
-  
-  const isLoading = ref(false);
-  const error = ref(null);
-  const progress = ref(0);
-  const isLoaded = ref(false);
-  const isCancelled = ref(false);
+// Обертка для debounce, которая возвращает Promise
+function debounceAsync(fn, wait) {
+  let timeout
+  return (...args) => {
+    return new Promise((resolve, reject) => {
+      clearTimeout(timeout)
+      timeout = setTimeout(async () => {
+        try {
+          const result = await fn(...args)
+          resolve(result)
+        } catch (err) {
+          reject(err)
+        }
+      }, wait)
+    })
+  }
+}
 
-  const loadAllData = debounce(async (params = {}) => {
+export default function useFullDataLoader(apiFunction, tableName = 'default') {
+  const store = useTableStore()
+
+  const isLoading = ref(false)
+  const error = ref(null)
+  const progress = ref(0)
+  const isLoaded = ref(false)
+  const isCancelled = ref(false)
+
+  const _loadAllData = async (params = {}) => {
     try {
-      console.log('=== НАЧАЛО ЗАГРУЗКИ ВСЕХ ДАННЫХ ===');
-      console.log('Параметры загрузки:', params);
-      
-      isLoading.value = true;
-      error.value = null;
-      isCancelled.value = false;
-      allData.value = [];
-      
-      // Получаем даты из localStorage
-      const storedDates = useStorage('dates', { start: '', end: '' });
-      console.log('Даты из localStorage:', storedDates.value);
-      
-      // Формируем параметры как в usePaginatedTable, добавляем limit: 500
+      isLoading.value = true
+      error.value = null
+
+      isCancelled.value = false
+      store.setAllData(tableName, [])
+
+      const storedDates = useStorage('dates', { start: '', end: '' })
+
       const requestParams = {
         ...params,
         dateFrom: storedDates.value.start || '',
         dateTo: storedDates.value.end || '',
         limit: 500
-      };
-      
-      console.log('Финальные параметры запроса:', requestParams);
-      
-      // Загружаем первую страницу, чтобы узнать общее количество страниц
-      console.log('Загружаем первую страницу для получения метаданных...');
-      const firstPageParams = { ...requestParams, page: 1 };
-      const firstResponse = await apiFunction(firstPageParams);
-      
-      if (!firstResponse.data || !firstResponse.data.meta) {
-        throw new Error('Invalid API response structure');
       }
-      
+
+      const firstResponse = await apiFunction({ ...requestParams, page: 1 })
+      console.log('Первый запрос для проверки', tableName, firstResponse)
+      if (!firstResponse.data || !firstResponse.data.meta) throw new Error('Invalid API response structure')
+
       const totalPages = firstResponse.data.meta.last_page;
-      console.log('Метаданные получены:', firstResponse.data.meta);
-      console.log('Общее количество страниц:', totalPages);
-      console.log('Записей на первой странице:', firstResponse.data.data.length);
-      
-      allData.value = [...firstResponse.data.data];
-      progress.value = (1 / totalPages) * 100;
-      console.log('Прогресс после первой страницы:', progress.value + '%');
-      
-      // Загружаем остальные страницы последовательно с задержкой
-      console.log('Начинаем загрузку остальных страниц...');
+      let allLoadedData = firstResponse.data.data;
+      store.setAllData(tableName, [...allLoadedData])
+      progress.value = (1 / totalPages) * 100
+
       for (let page = 2; page <= totalPages; page++) {
-        // Проверяем, не была ли загрузка отменена
-        if (isCancelled.value) {
-          console.log('Загрузка данных отменена пользователем');
-          break;
-        }
-        
+        if (isCancelled.value) break
+        await new Promise(r => setTimeout(r, 100))
         try {
-          console.log(`Загружаем страницу ${page}/${totalPages}...`);
-          
-          // Добавляем задержку между запросами (100ms)
-          await new Promise(resolve => setTimeout(resolve, 100));
-          
-          const response = await apiFunction({ ...requestParams, page });
-          
+          const response = await apiFunction({ ...requestParams, page })
           if (response.data && Array.isArray(response.data.data)) {
-            allData.value = [...allData.value, ...response.data.data];
-            progress.value = (page / totalPages) * 100;
-            console.log(`Страница ${page} загружена. Записей: ${response.data.data.length}. Прогресс: ${progress.value.toFixed(1)}%`);
+            allLoadedData = [...allLoadedData, ...response.data.data];
+            console.log(`allLoadedData ${page}`, allLoadedData)
+            store.setAllData(tableName, [...allLoadedData]);
+            progress.value = (page / totalPages) * 100
           }
-        } catch (err) {
-          console.error(`Ошибка загрузки страницы ${page}:`, err);
-          
-          // Если получили 429 (Too Many Requests), увеличиваем задержку
+        } 
+        catch (err) {
+          console.error('err', err)
           if (err.response && err.response.status === 429) {
-            console.log('Достигнут лимит запросов, ждем 2 секунды...');
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            
-            // Пробуем еще раз
+            console.error('429')
+            await new Promise(r => setTimeout(r, 2000))
             try {
-              console.log(`Повторная попытка загрузки страницы ${page}...`);
-              const retryResponse = await apiFunction({ ...requestParams, page });
-              if (retryResponse.data && Array.isArray(retryResponse.data.data)) {
-                allData.value = [...allData.value, ...retryResponse.data.data];
-                progress.value = (page / totalPages) * 100;
-                console.log(`Страница ${page} загружена после повторной попытки. Записей: ${retryResponse.data.data.length}`);
+              const retry = await apiFunction({ ...requestParams, page })
+              if (retry.data && Array.isArray(retry.data.data)) {
+                allLoadedData = [...allLoadedData, ...retry.data.data];
+                store.setAllData(tableName, [...allLoadedData]);
+                progress.value = (page / totalPages) * 100
               }
-            } catch (retryErr) {
-              console.error(`Повторная попытка для страницы ${page} не удалась:`, retryErr);
-              // Пропускаем эту страницу и продолжаем
-            }
+            } catch { /* skip */ }
           }
-          // Продолжаем загрузку остальных страниц даже если одна не загрузилась
         }
       }
-      isLoaded.value = true;
-      console.log('=== ЗАГРУЗКА ВСЕХ ДАННЫХ ЗАВЕРШЕНА ===');
-      console.log('Общее количество загруженных записей:', allData.value.length);
-      console.log('Финальный прогресс:', progress.value + '%');
+      const finalData = store.tables[tableName]?.allData || []
+      console.log('Всего загружено записей:', finalData)
+
+      isLoaded.value = true
+
+      return allLoadedData;
     } catch (err) {
-      console.error('Ошибка загрузки всех данных:', err);
-      error.value = err.message;
+      console.error('Ошибка в loadAllData',err)
+      error.value = err.message
+      throw err;
     } finally {
       isLoading.value = false;
-      console.log('Состояние загрузки установлено в false');
+      // progress.value = 0;
     }
-  }, 300);
+  }
 
+  const loadAllData = debounceAsync(_loadAllData, 300)
+
+  
   const applyFilters = (filters) => {
-    console.log('=== НАЧАЛО ПРИМЕНЕНИЯ ФИЛЬТРОВ ===');
-    console.log('Storage key:', storageKey);
-    console.log('Количество записей для фильтрации:', allData.value?.length || 0);
-    console.log('Источник данных: localStorage (useStorage)');
-    console.log('Применяемые фильтры:', filters);
-    
-    if (!allData.value || allData.value.length === 0) {
-      console.log('Нет данных для фильтрации');
-      return;
-    }
-    
-    const filtered = allData.value.filter(item => {
-      return Object.keys(filters).every(fieldKey => {
+    const table = store.tables[tableName]
+    if (!table || !Array.isArray(table.allData)) return
+
+    const all = table.allData
+    console.log('all', all)
+    const filtered = all.filter(item =>
+      Object.keys(filters).every(fieldKey => {
         const fieldFilters = filters[fieldKey];
         if (!fieldFilters || fieldFilters.filterItems.length === 0) return true;
-        
-        return fieldFilters.filterItems.some(filter => {
-          const itemValue = String(item[fieldKey] || '');
-          const matches = itemValue.toLowerCase().includes(filter.text.toLowerCase());
-          return matches;
-        });
-      });
-    });
-    
-    console.log('Количество записей после фильтрации:', filtered.length);
-    
-    filteredData.value = {
-      data: filtered,
-      meta: {
-        current_page: 1,
-        per_page: 20,
-        total: filtered.length,
-        last_page: Math.ceil(filtered.length / 20)
-      }
-    };
-    
-    console.log('Метаданные отфильтрованных данных:', filteredData.value.meta);
-    console.log('=== ПРИМЕНЕНИЕ ФИЛЬТРОВ ЗАВЕРШЕНО ===');
-  };
+        return fieldFilters.filterItems.some(filter =>
+          String(item[fieldKey] ?? '').toLowerCase() === filter.text.toLowerCase()
+        );
+      })
+    );
+    console.log('filtered', filtered)
 
-  const clearData = () => {
-    console.log('=== ОЧИСТКА ДАННЫХ ===');
-    console.log('Storage key:', storageKey);
-    console.log('Количество записей до очистки:', allData.value.length);
-    
-    allData.value = [];
-    isLoaded.value = false;
-    progress.value = 0;
-    
-    console.log('Данные очищены из localStorage');
-  };
+    const perPage = 20
+    const total = filtered.length
+    const lastPage = Math.max(1, Math.ceil(total / perPage))
+    const pages = Array.from({ length: lastPage }, (_, i) => {
+      const start = i * perPage
+      return {
+        data: filtered.slice(start, start + perPage),
+        meta: { current_page: i + 1, per_page: perPage, total, last_page: lastPage }
+      }
+    })
+
+    store.setFilteredPages(tableName, pages)
+  }
+
+  const clearData = (isAfterLoading = true) => {
+      console.log('Очистка данных', isAfterLoading ? 'после загрузки' : 'принудительная');
+      if (!isAfterLoading) {
+          store.clear(tableName);
+      }
+      progress.value = 0;
+      isLoading.value = false;
+      isLoaded.value = false;
+      error.value = null;
+  }
 
   const cancelLoading = () => {
-    isCancelled.value = true;
-    isLoading.value = false;
-  };
+    isCancelled.value = true
+    isLoading.value = false
+    progress.value = 0
+  }
 
   return {
-    allData: computed(() => allData.value),
-    filteredData: computed(() => filteredData.value),
+    allData: computed(() => store.tables[tableName]?.allData || []),
+    filteredPages: computed(() => store.tables[tableName]?.filteredPaginatingData || []),
     applyFilters,
     isLoading,
     error,
@@ -196,5 +163,5 @@ export default function useFullDataLoader(apiFunction, storageKey = 'fullData') 
     loadAllData,
     clearData,
     cancelLoading
-  };
+  }
 }

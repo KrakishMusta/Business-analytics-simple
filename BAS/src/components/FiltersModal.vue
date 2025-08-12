@@ -15,13 +15,17 @@
     const menuRef = ref(null);
 
     const filtersStorage = useStorage('business-analytics-filters', {})
+
+    const isReloadData = ref(false);
     
     const filters = ref({})
 
     const isOpen = ref(false)
 
     const changeOpen = (value = true) => {
-        isOpen.value = value
+        isOpen.value = value;
+
+        console.log('Отображение окон завершения', props.isLoading, props.progress)
         
         // Добавляем обработчик клика вне модального окна
         if (value) {
@@ -49,7 +53,6 @@
 
     const closeModal = () => {
         console.log('Закрытие модального окна фильтров пользователем');
-        isLoading.value = false;
         emit('closeModal');
     };
 
@@ -68,12 +71,15 @@
     watch([() => props.isLoading, () => props.progress], ([isLoading, progress]) => {
         if (!isLoading && progress >= 100) {
             console.log('Загрузка завершена, планируем автоматическое закрытие через 5 секунд');
-            setTimeout(() => {
+            const timer = setTimeout(() => {
                 if (!props.isLoading && props.progress >= 100) {
                     console.log('Автоматическое закрытие модального окна');
                     closeModal();
                 }
             }, 5000);
+            
+            // Очищаем таймер при размонтировании
+            onUnmounted(() => clearTimeout(timer));
         }
     });
 
@@ -165,7 +171,7 @@
 <template>
     <div v-if="isOpen" ref="menuRef"
         class="flex flex-col gap-4 max-w-[70%] max-h-[60%] min-w-[50%] min-h-[50%] bg-white border-2 border-indigo-200 shadow-2xl shadow-indigo-200 absolute z-[60] top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-        <div class="flex px-2 pt-2 justify-between box-border">
+        <div class="flex px-4 pt-2 justify-between box-border">
             <div class="flex gap-2 items-center">
                 <h3 class="text-lg font-medium text-cyan-950">Фильтры</h3>
                 <button 
@@ -173,13 +179,6 @@
                     :disabled="isLoading"
                     class="bg-indigo-200 hover:bg-indigo-100 px-2 py-1 rounded cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
                     {{ isLoading ? 'Загрузка...' : 'Применить' }}
-                </button>
-                <button 
-                    v-if="hasCachedData && !isLoading"
-                    @click.stop="reloadData"
-                    class=" flex gap-2 bg-indigo-950 hover:bg-indigo-800 px-2 py-1 rounded cursor-pointer text-xs text-indigo-200">
-                    <svgReloadIcon/> 
-                    <span class=" self-center">Перезагрузить</span>
                 </button>
             </div>
             <button 
@@ -200,10 +199,10 @@
             <div class="w-full bg-gray-200 rounded-full h-2">
                 <div 
                     class="bg-cyan-950 h-2 rounded-full transition-all duration-300" 
-                    :style="{ width: `${progress || 0}%` }">
+                    :style="{ width: `${progress}%` }">
                 </div>
             </div>
-            <div class="text-xs text-indigo-200 mt-1">{{ Math.round(progress || 0) }}%</div>
+            <div class="text-xs text-indigo-200 mt-1">{{ Math.round(progress) }}%</div>
         </div>
         
         <!-- Отображение ошибки -->
@@ -233,10 +232,17 @@
         </div>
         
         <!-- Информация о кэшированных данных -->
-        <div v-if="hasCachedData && !isLoading && progress === 0" class="px-4 pb-2">
-            <div class="bg-blue-100 border border-blue-400 text-blue-700 px-3 py-2 rounded text-sm">
+        <div v-if="hasCachedData && !isLoading && progress === 0" class="flex justify-between px-4 pb-2">
+            <div class="bg-blue-100 border border-blue-400 text-blue-700 px-3 py-2 rounded-l-md text-sm">
                 Используются кэшированные данные из localStorage
             </div>
+            <button 
+                    v-if="hasCachedData && !isLoading"
+                    @click.stop="reloadData"
+                    class=" flex gap-2 bg-indigo-950 hover:bg-indigo-800 px-2 py-1 rounded-r-md cursor-pointer text-xs text-indigo-200">
+                    <svgReloadIcon class=" self-center"/> 
+                    <span class=" self-center">Перезагрузить</span>
+            </button>
         </div>
         <div class=" grid grid-cols-[max-content] flex-col gap-x-4 gap-y-2 container p-4 box-border pt-0 overflow-y-auto">
             <FilterRow

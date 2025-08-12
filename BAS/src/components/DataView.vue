@@ -2,6 +2,7 @@
     import { computed, ref, watch, onMounted } from 'vue';
     import { useRouter, useRoute } from 'vue-router';
     import { useStorage } from '@vueuse/core';
+    import { useTableStore } from '@/stores/tableStore';
     import DateInput from './DateInput.vue';
     import TableWithPagination from './Table.vue';
     import DataGraph from './DataGraphModal.vue';
@@ -17,19 +18,25 @@
       columns: Array
     });
 
-    const {
-      data: tableData,
-      loading,
-      error,
-      pagination,
-      sortField,
-      sortDirection,
-      fetchData,
-      sort
-    } = usePaginatedTable(props.fetchMethod);
-
     const router = useRouter();
     const route = useRoute();
+    const store = useTableStore();
+
+    const storageKey = ref(route.name || 'default');
+
+    const {
+      // data: tableData,
+      loading,
+      error,
+    //   pagination,
+    //   sortField,
+    //   sortDirection,
+      fetchData,
+    //   sort,
+      setSource
+    } = usePaginatedTable(props.fetchMethod, { source: 'server', storageKey });
+
+
     const title = computed(() => router.currentRoute.value.meta.title)
     const filtersRef = ref(null);
 
@@ -37,13 +44,9 @@
 
     const startDate = ref(storedDates.value.start);
     const endDate = ref(storedDates.value.end);
-
-
-    // Создаем реактивный ключ для localStorage
-    const storageKey = ref(route.name || 'default');
     
     // Создаем useFullDataLoader с текущим ключом
-    const { allData, filteredData, applyFilters, loadAllData, isLoading: fullDataLoading, progress, error: fullDataError } = useFullDataLoader(props.fetchMethod, storageKey.value);
+    const { allData, filteredPages, applyFilters, loadAllData, isLoading: fullDataLoading, progress, error: fullDataError, clearData, cancelLoading } = useFullDataLoader(props.fetchMethod, storageKey.value);
 
     // Состояние для отслеживания процесса применения фильтров
     const isApplyingFilters = ref(false);
@@ -97,7 +100,7 @@
     // Метод для применения фильтров
     const applyFiltersToData = async () => {
         console.log('=== НАЧАЛО ПРИМЕНЕНИЯ ФИЛЬТРОВ ===');
-        console.log('Текущий маршрут:', route.name);
+        console.log('Текущий маршрут:', route.name, storageKey.value);
         console.log('Текущие даты:', { start: startDate.value, end: endDate.value });
         
         isApplyingFilters.value = true;
@@ -105,17 +108,25 @@
         try {
             // 1. Загружаем все данные если не загружены
             
-            if (!allData.value || allData.value.length === 0) {
-                console.log('Данные не загружены, начинаем загрузку всех данных...');
+            if (!allData.value || !Array.isArray(allData.value) || allData.value.length === 0) {
+                console.log('Данные не загружены, начинаем загрузку...');
                 await loadAllData();
-                console.log('Загрузка завершена. Загружено записей:', allData.value?.length || 0);
-            } else {
+                console.log('Данные загружены. Проверяем:', {
+                    inStore: store.tables[storageKey.value]?.allData?.length,
+                    inRef: allData.value?.length
+                });
+            }
+            else {
                 console.log('allData', allData.value)
-                console.log('Данные уже загружены из localStorage. Количество записей:', allData.value.length);
+                console.log('Данные уже загружены из Pinia. Количество записей:', allData.value, allData.value.length);
                 console.log('Источник: useStorage автоматически восстановил данные из кэша');
             }
+
+            if (!allData.value || !Array.isArray(allData.value)) {
+                throw new Error('Данные не загружены или имеют неверный формат');
+            }
             
-            // 2. Получаем фильтры из localStorage
+            // 2. Получаем фильтры из Pinia
             const filtersStorage = useStorage('business-analytics-filters', {});
             console.log('Применяемые фильтры:', filtersStorage.value);
             
@@ -124,8 +135,12 @@
             applyFilters(filtersStorage.value);
             
             console.log('Фильтры применены успешно');
-            console.log('Отфильтрованные данные:', filteredData.value);
+            console.log('Отфильтрованные данные:', filteredPages.value);
             
+            // 3.1 Переключаем таблицу на клиентский источник данных и обновляем страницу 1
+            setSource('client');
+            await fetchData(1);
+
             // 4. НЕ закрываем модальное окно автоматически
             // filtersRef.value.changeOpen(false);
             console.log('Модальное окно фильтров остается открытым для отображения прогресса');
@@ -140,7 +155,14 @@
 
     // Метод для закрытия модального окна фильтров
     const closeFiltersModal = () => {
-        console.log('Закрытие модального окна фильтров');
+        console.log('Закрытие модального окна фильтров', fullDataLoading.value, progress.value);
+        // Полностью сбрасываем состояние
+        if (progress.value >= 100 || !fullDataLoading.value) {
+            console.log('Полная очистка состояния');
+            clearData();
+            progress.value = 0;
+            fullDataLoading.value = false;
+        }
         filtersRef.value.changeOpen(false);
     }
 
@@ -149,8 +171,9 @@
         console.log('=== ПРИНУДИТЕЛЬНАЯ ПЕРЕЗАГРУЗКА ДАННЫХ ===');
         
         // Очищаем кэшированные данные
-        const { clearData } = useFullDataLoader(props.fetchMethod, storageKey.value);
-        clearData();
+        clearData(false);
+        fullDataLoading.value = false;
+        progress.value = 0; // Сбрасываем прогресс
         
         // Загружаем данные заново
         await applyFiltersToData();
@@ -159,7 +182,7 @@
     watch(() => route.name, (newName, oldName) => {
         console.log(`Маршрут изменён: ${oldName} -> ${newName}`)
         storageKey.value = newName || 'default';
-        setDates(true)
+        // setDates(true)
     }, { immediate: true });
 
     watch([startDate, endDate], ([newStart, newEnd]) => {
@@ -168,12 +191,15 @@
             end: newEnd
         };
         setDates();
+        // Переключаемся на серверный источник при изменении дат и перезагружаем данные
+        setSource('server');
         fetchData(1);
         console.log('Даты обновлены в localStorage:', storedDates.value);
     });
 
     onMounted(() => {
         setDates(true);
+        setSource('server');
         fetchData();
     });
 </script>
@@ -236,17 +262,16 @@
             </div>
         </div>
         
+        <!-- :pagination="pagination" -->
+        <!-- :sort-field="sortField"
+        :sort-direction="sortDirection"
+        @sort="sort" -->
         <div class="w-full">
             <TableWithPagination
-                :data="tableData"
                 :loading="loading"
                 :error="error"
-                :pagination="pagination"
-                :sort-field="sortField"
-                :sort-direction="sortDirection"
                 :columns="columns"
                 @page-change="fetchData"
-                @sort="sort"
             />
         </div>
     </div>

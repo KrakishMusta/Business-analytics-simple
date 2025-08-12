@@ -1,12 +1,13 @@
 <script setup>
+    import { computed, ref, watch, onMounted } from 'vue';
     import svgFilterIcon from './svgFilterIcon.vue'
     import { useStorage } from '@vueuse/core';
 
     const props = defineProps({
-        data: Array,
+        // data: Array,
         loading: Boolean,
         error: [String, null],
-        pagination: Object,
+        // pagination: Object,
         sortField: [String, null],
         sortDirection: String,
         columns: Array
@@ -14,9 +15,55 @@
 
     const emit = defineEmits(['page-change', 'sort'])
 
+    const filters = useStorage('business-analytics-filters', {})
+
+    function getFilterItems(key) {
+      return filters.value[key]?.filterItems ?? []
+    }
+
+    const storedTableData = useStorage('table_state', {
+      data: [],
+      pagination: {
+        current_page: 1,
+        per_page: 20,
+        total: 0,
+        last_page: 1,
+        links: []
+      }
+    });
+  
+    const tableData = computed({
+      get: () => Array.isArray(storedTableData.value?.data) ? storedTableData.value.data : [],
+      set: (value) => {
+        storedTableData.value.data = value;
+      }
+    });
+
+    const pagination = computed({
+      get: () => {
+        const p = storedTableData.value && storedTableData.value.pagination ? storedTableData.value.pagination : undefined;
+        return {
+          current_page: p?.current_page ?? 1,
+          per_page: parseInt(p?.per_page) || 20,
+          total: p?.total ?? 0,
+          last_page: p?.last_page ?? 1,
+          links: Array.isArray(p?.links) ? p.links : []
+        };
+      },
+      set: (value) => {
+        storedTableData.value.pagination = {
+          current_page: value.current_page || 1,
+          per_page: parseInt(value.per_page) || 20,
+          total: value.total || 0,
+          last_page: value.last_page || 1,
+          links: Array.isArray(value.links) ? value.links : []
+        };
+      }
+    });
+
     const handlePageChange = (url) => {
         if (!url) return
-        const page = new URL(url).searchParams.get('page')
+        const page = new URL(url, window.location.href).searchParams.get('page')
         emit('page-change', parseInt(page))
     }
 
@@ -24,6 +71,13 @@
         if (value === null || value === undefined) return false;
         return !isNaN(parseFloat(value)) && isFinite(value);
     };
+
+    const isDate = (value) => {
+      if (!value) return false;
+      // Пробуем создать дату — если валидная, вернем true
+      const d = new Date(value);
+      return !isNaN(d.getTime());
+    }
 
     const formatValue = (value, column) => {
         if (column.formatter) {
@@ -35,6 +89,13 @@
     const sort = (field) => {
         emit('sort', field)
     }
+
+    onMounted(
+      () =>
+      {
+        console.log('tableData',tableData.value)
+      }
+    )
 </script>
 
 <template>
@@ -43,28 +104,35 @@
         <thead class="w-[100%] h-8 cursor-default">
           <tr class="table-row">
             <th
-                class="table-cell-custom"
-                v-for="column in columns" 
-                :key="column.key"
+              class="table-cell-custom"
+              :class="{ 'bg-indigo-200': getFilterItems(column.key).length > 0 }"
+              v-for="column in columns"
+              :key="column.key"
+            >
+              <span
+                class="flex items-center"
+                :class="getFilterItems(column.key).length > 0 ? 'justify-between gap-2' : 'justify-center'"
               >
-              <!-- @click="sort(column.key)" -->
-              <span class=" flex justify-between">
                 <span>{{ column.title }}</span>
 
-                <!-- <span><svg-filter-icon/></span> -->
+                <span v-if="getFilterItems(column.key).length > 0">
+                  <svg-filter-icon />
+                </span>
                 <span v-if="sortField === column.key">
                   {{ sortDirection === 'asc' ? '↑' : '↓' }}
                 </span>
-
               </span>
-
             </th>
           </tr>
         </thead>
         <tbody>
           <!-- {{ data }} -->
-          <tr class="table-row" v-for="(item, index) in data" :key="`${item.nm_id}_${index}`">
-            <td :class="{ 'text-center': isNumeric(item[column.key]), 'table-cell-custom': true }" v-for="column in columns" :key="column.key">
+          <tr class="table-row" v-for="(item, index) in tableData" :key="`${item.nm_id}_${index}`">
+            <td
+              :class="{ 'text-center': isNumeric(item[column.key]) || isDate(item[column.key]), 'table-cell-custom': true }"
+              v-for="column in columns"
+              :key="column.key"
+            >
               {{ formatValue(item[column.key], column) }}
             </td>
           </tr>
