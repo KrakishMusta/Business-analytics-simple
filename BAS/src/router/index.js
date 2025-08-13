@@ -44,7 +44,8 @@ const routes = [
 ]
 
 const router = createRouter({
-  history: createWebHistory('/Business-analytics-simple/'),
+  // history: createWebHistory('/Business-analytics-simple/'),
+  history: createWebHistory(),
   routes
 })
 

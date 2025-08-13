@@ -11,7 +11,7 @@
     "build": "vite build && copy dist\\index.html dist\\404.html",
     "preview": "vite preview",
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d dist"
+    "deploy": "netlify deploy --prod"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.11",
