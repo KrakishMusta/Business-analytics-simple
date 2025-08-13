@@ -14,8 +14,14 @@
     })
 
     const emit = defineEmits(['page-change', 'sort'])
+    
+    const columnsViewStorage = useStorage('table-columns-view', {})
 
     const filters = useStorage('business-analytics-filters', {})
+
+    const visibleColumns = computed(() => {
+      return props.columns.filter(column => columnsViewStorage.value[column.key]?.isView !== false)
+    })
 
     function getFilterItems(key) {
       return filters.value[key]?.filterItems ?? []
@@ -106,7 +112,7 @@
             <th
               class="table-cell-custom"
               :class="{ 'bg-indigo-200': getFilterItems(column.key).length > 0 }"
-              v-for="column in columns"
+              v-for="column in visibleColumns"
               :key="column.key"
             >
               <span
@@ -126,11 +132,10 @@
           </tr>
         </thead>
         <tbody>
-          <!-- {{ data }} -->
           <tr class="table-row" v-for="(item, index) in tableData" :key="`${item.nm_id}_${index}`">
             <td
               :class="{ 'text-center': isNumeric(item[column.key]) || isDate(item[column.key]), 'table-cell-custom': true }"
-              v-for="column in columns"
+              v-for="column in visibleColumns"
               :key="column.key"
             >
               {{ formatValue(item[column.key], column) }}
@@ -176,7 +181,8 @@
             @apply box-border px-6 align-middle text-nowrap;
         }
         .table-container {
-            @apply w-full overflow-x-scroll flex max-w-fit flex-col gap-8;
+            @apply w-full flex flex-col gap-8;
+            overflow-x: auto;
             -webkit-overflow-scrolling: touch;
         }
             /* Стили для скроллбара (опционально) */
