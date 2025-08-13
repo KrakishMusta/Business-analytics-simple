@@ -49,14 +49,10 @@
     const startDate = ref(storedDates.value.start);
     const endDate = ref(storedDates.value.end);
     
-    // Создаем useFullDataLoader с текущим ключом
     const { allData, filteredPages, applyFilters, loadAllData, isLoading: fullDataLoading, progress, error: fullDataError, clearData, cancelLoading } = useFullDataLoader(props.fetchMethod, storageKey.value);
 
-    // Состояние для отслеживания процесса применения фильтров
     const isApplyingFilters = ref(false);
 
-
-    // Исключаем поле date из фильтров для страницы stocks
     const filterableColumns = computed(() => {
         if (route.name === 'stocks') {
             return props.columns.filter(column => column.key !== 'date');
@@ -167,13 +163,10 @@
             
             console.log('Фильтры применены успешно');
             console.log('Отфильтрованные данные:', filteredPages.value);
-            
-            // 3.1 Переключаем таблицу на клиентский источник данных и обновляем страницу 1
+
             setSource('client');
             await fetchData(1);
 
-            // 4. НЕ закрываем модальное окно автоматически
-            // filtersRef.value.changeOpen(false);
             console.log('Модальное окно фильтров остается открытым для отображения прогресса');
             
         } catch (error) {
@@ -184,10 +177,8 @@
         }
     }
 
-    // Метод для закрытия модального окна фильтров
     const closeFiltersModal = () => {
         console.log('Закрытие модального окна фильтров', fullDataLoading.value, progress.value);
-        // Полностью сбрасываем состояние
         if (progress.value >= 100 || !fullDataLoading.value) {
             console.log('Полная очистка состояния');
             clearData();
@@ -197,23 +188,19 @@
         filtersRef.value.changeOpen(false);
     }
 
-    // Метод для принудительной перезагрузки данных
     const reloadData = async () => {
         console.log('=== ПРИНУДИТЕЛЬНАЯ ПЕРЕЗАГРУЗКА ДАННЫХ ===');
         
-        // Очищаем кэшированные данные
         clearData(false);
         fullDataLoading.value = false;
-        progress.value = 0; // Сбрасываем прогресс
+        progress.value = 0;
         
-        // Загружаем данные заново
         await applyFiltersToData();
     }
 
     watch(() => route.name, (newName, oldName) => {
         console.log(`Маршрут изменён: ${oldName} -> ${newName}`)
         storageKey.value = newName || 'default';
-        // setDates(true)
     }, { immediate: true });
 
     watch([startDate, endDate], ([newStart, newEnd]) => {
@@ -222,7 +209,6 @@
             end: newEnd
         };
         setDates();
-        // Переключаемся на серверный источник при изменении дат и перезагружаем данные
         setSource('server');
         fetchData(1);
         console.log('Даты обновлены в localStorage:', storedDates.value);
