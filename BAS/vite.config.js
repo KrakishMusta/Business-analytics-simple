@@ -18,7 +18,7 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url))
     },
   },
-  base: '/',
+  base: '/Business-analytics-simple/',
   build: {
     outDir: 'dist',
     rollupOptions: {
