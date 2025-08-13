@@ -71,7 +71,7 @@ export default function usePaginatedTable(apiFunction, options = {}) {
             dateFrom: storedDates.value.start || '',
             dateTo: storedDates.value.end || ''
           });
-          console.log('Запрос', page)
+          console.log('Запрос', page, 'tableName', tableName.value)
 
           if (resp?.data?.data && Array.isArray(resp.data.data)) {
             const current = store.tables[tableName]?.allData || [];

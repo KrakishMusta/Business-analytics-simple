@@ -1,10 +1,11 @@
 <script setup>
-    import { computed, ref, watch, onMounted } from 'vue';
+    import { computed, ref, watch, onMounted, onUnmounted } from 'vue';
     import { useRouter, useRoute } from 'vue-router';
     import { useStorage } from '@vueuse/core';
     import { useTableStore } from '@/stores/tableStore';
     import DateInput from './DateInput.vue';
     import TableWithPagination from './Table.vue';
+    import TableSettingsModal from './TableSettingsModal.vue';
     import DataGraph from './DataGraphModal.vue';
     import Filters from './FiltersModal.vue';
     import svgFilterIcon from './svgFilterIcon.vue';
@@ -38,6 +39,9 @@
 
 
     const title = computed(() => router.currentRoute.value.meta.title)
+
+    const tableSettingsRef = ref(null)
+    const graphRef = ref(null);
     const filtersRef = ref(null);
 
     const storedDates = useStorage('dates', { start: '', end: '' });
@@ -89,12 +93,39 @@
         }
     }
 
+    const showTableView = () => {
+        tableSettingsRef.value.changeOpen(true);
+    }
+
     const showGraph = () => {
-        console.log('showGraph')
+        graphRef.value.changeOpen(true);
     }
 
     const showFilters = () => {
         filtersRef.value.changeOpen(true)
+    }
+
+    const loadData = async () => 
+    {
+        if (!allData.value || !Array.isArray(allData.value) || allData.value.length === 0) {
+                console.log('Данные не загружены, начинаем загрузку...');
+                await loadAllData();
+                console.log('Данные загружены. Проверяем:', {
+                    inStore: store.tables[storageKey.value]?.allData?.length,
+                    inRef: allData.value?.length
+                });
+        }
+        else {
+            console.log('allData', allData.value)
+            console.log('Данные уже загружены из Pinia. Количество записей:', allData.value, allData.value.length);
+            console.log('Источник: useStorage автоматически восстановил данные из кэша');
+        }
+
+        if (!allData.value || !Array.isArray(allData.value)) {
+            throw new Error('Данные не загружены или имеют неверный формат');
+        }
+
+        graphRef.value.updateChart();
     }
 
     // Метод для применения фильтров
@@ -202,13 +233,28 @@
         setSource('server');
         fetchData();
     });
+    onUnmounted(() => {
+        cancelLoading();
+    });
 </script>
 
 <template>
-    <!-- <DataGraph
-        :data=""
-        :field="columns"
-    /> -->
+    <TableSettingsModal
+        ref="tableSettingsRef"
+        :fields="columns"
+        :is-loading="fullDataLoading || isApplyingFilters"
+        :progress="progress"
+        :error="fullDataError"
+    />
+    <DataGraph
+        ref="graphRef"
+        :fields="columns"
+        :is-loading="fullDataLoading || isApplyingFilters"
+        :progress="progress"
+        :error="fullDataError"
+        :has-cached-data="allData && allData.length > 0"
+        @load-data="loadData"
+    />
     <Filters
         ref="filtersRef"
         :fields="filterableColumns"
@@ -223,19 +269,22 @@
     <div class="flex flex-col px-5 sm:px-10 md:px-8 lg:px-10 box-border mt-10 w-full max-w-screen-2xl mx-auto">
         <div class="flex flex-col md:flex-row gap-6 md:gap-12 items-start md:items-center mb-6 text-cyan-950">
             <div class="flex flex-row gap-6">
-                <button 
+                <button
+                    @click.stop="showTableView"
                     class="inline-flex justify-center items-center size-8 text-2xl bg-indigo-200 hover:bg-indigo-100 rounded cursor-pointer">
                     <svg class=" md: size-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path class=" stroke-cyan-950" d="M4 12H20M12 4V20" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                 </button>
                         
-                <button class="inline-flex justify-center items-center size-8 text-2xl bg-indigo-200 hover:bg-indigo-100 rounded cursor-pointer">
+                <button 
+                    @click.stop="showGraph"
+                    class="inline-flex justify-center items-center size-8 text-2xl bg-indigo-200 hover:bg-indigo-100 rounded cursor-pointer">
                     <svgGraphIcon/>
                 </button>
 
                 <button 
-                    @click="showFilters"
+                    @click.stop="showFilters"
                     class="inline-flex justify-center items-center size-8 text-2xl bg-indigo-200 hover:bg-indigo-100 rounded cursor-pointer">
                     <svgFilterIcon/>
                 </button>
@@ -278,5 +327,5 @@
 </template>
 
 <style scoped>
-
+    
 </style>

@@ -2,6 +2,7 @@
     import { ref, onMounted, onUnmounted, watch } from 'vue';
     import { useStorage } from '@vueuse/core';
     import FilterRow from './FilterRow.vue';
+    import ModalWrapper from './ModalWrapper.vue';
     import svgReloadIcon from './svgReloadIcon.vue';
 
     const props = defineProps({
@@ -171,7 +172,7 @@
 <template>
     <div v-if="isOpen" ref="menuRef"
         class="flex flex-col gap-4 max-w-[70%] max-h-[60%] min-w-[50%] min-h-[50%] bg-white border-2 border-indigo-200 shadow-2xl shadow-indigo-200 absolute z-[60] top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-        <div class="flex px-4 pt-2 justify-between box-border">
+        <div class="flex px-4 py-2 justify-between box-border">
             <div class="flex gap-2 items-center">
                 <h3 class="text-lg font-medium text-cyan-950">Фильтры</h3>
                 <button 
@@ -262,16 +263,15 @@
     }
 
     .container::-webkit-scrollbar-track {
-        background: #f1f1f1;
-        border-radius: 4px;
+        background: oklch(92.2% 0.018 272.314);
     }
 
     .container::-webkit-scrollbar-thumb {
-        background: #cbd5e1;
+        background: oklch(87% 0.065 274.039);
         border-radius: 4px;
     }
 
     .container::-webkit-scrollbar-thumb:hover {
-        background: #94a3b8;
+        background: oklch(0.785 0.115 274.713);
     }
 </style>

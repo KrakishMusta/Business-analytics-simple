@@ -58,7 +58,7 @@ export default function useFullDataLoader(apiFunction, tableName = 'default') {
       progress.value = (1 / totalPages) * 100
 
       for (let page = 2; page <= totalPages; page++) {
-        if (isCancelled.value) break
+        if (isCancelled.value) break;
         await new Promise(r => setTimeout(r, 100))
         try {
           const response = await apiFunction({ ...requestParams, page })
