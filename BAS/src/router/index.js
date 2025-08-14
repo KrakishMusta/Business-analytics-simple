@@ -2,7 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 
 const routes = [
   { 
-      path: '/Business-analytics-simple/',
+      path: '/',
       name: 'welcome',
       component: () => import('../pages/Welcome.vue'),
       meta: { 
@@ -10,7 +10,7 @@ const routes = [
       }
   },
     { 
-      path: '/Business-analytics-simple/sales',
+      path: '/sales',
       name: 'sales',
       component: () => import('../pages/Sales.vue'),
       meta: { 
@@ -18,7 +18,7 @@ const routes = [
       }
   },
     { 
-      path: '/Business-analytics-simple/orders',
+      path: '/orders',
       name: 'orders',
       component: () => import('../pages/Orders.vue'),
       meta: { 
@@ -26,7 +26,7 @@ const routes = [
       }
   },
     { 
-      path: '/Business-analytics-simple/stocks',
+      path: '/stocks',
       name: 'stocks',
       component: () => import('../pages/Stocks.vue'),
       meta: { 
@@ -34,7 +34,7 @@ const routes = [
       }
   },
     { 
-      path: '/Business-analytics-simple/incomes',
+      path: '/incomes',
       name: 'incomes',
       component: () => import('../pages/Incomes.vue'),
       meta: { 

@@ -14,10 +14,10 @@
             <RouterLink class="menu-item" v-if="!isCurrentRoute('welcome')" to="/">Главная</RouterLink>
         </nav>
         <nav class=" justify-self-center mx-[auto] flex justify-between items-center w-[fit-content] h-14 gap-6 max-sm:mx-0">
-            <RouterLink class="menu-item" v-if="!isCurrentRoute('sales')" to="/Business-analytics-simple/sales">Продажи</RouterLink>
-            <RouterLink class="menu-item" v-if="!isCurrentRoute('orders')" to="/Business-analytics-simple/orders">Заказы</RouterLink>
-            <RouterLink class="menu-item" v-if="!isCurrentRoute('stocks')" to="/Business-analytics-simple/stocks">Склады</RouterLink>
-            <RouterLink class="menu-item" v-if="!isCurrentRoute('incomes')" to="/Business-analytics-simple/incomes">Доходы</RouterLink>
+            <RouterLink class="menu-item" v-if="!isCurrentRoute('sales')" to="/sales">Продажи</RouterLink>
+            <RouterLink class="menu-item" v-if="!isCurrentRoute('orders')" to="/orders">Заказы</RouterLink>
+            <RouterLink class="menu-item" v-if="!isCurrentRoute('stocks')" to="/stocks">Склады</RouterLink>
+            <RouterLink class="menu-item" v-if="!isCurrentRoute('incomes')" to="/incomes">Доходы</RouterLink>
         </nav>
     </div>
 </template>
