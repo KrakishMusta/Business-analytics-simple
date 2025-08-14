@@ -30,6 +30,17 @@
   ```bash
    npm run dev
   ```
+### Build и Deploy
+В package.json настроен build в директорию /dist, при deploy будет произведён push в ветку gh-pages.
+После внесения ищменений в ветви разработки или основной ветви выполните:
+*  В директорию BAS запустить
+  ```bash
+   npm run build
+  ```
+*  После
+  ```bash
+   npm run deploy
+  ```
 
 ## **Структура и детали реализации**
 
