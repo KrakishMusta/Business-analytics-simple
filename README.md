@@ -1,5 +1,6 @@
 # Business-analytics-simple
 Тестовое задание, демонстрирующее владение заданным стеком технологий. [Техническое задание.](https://github.com/KrakishMusta/Business-analytics-simple/blob/main/Docs/task.md)
+Сайт: http://business-analytics-simple.duckdns.org/
 
 ## **Основные функции**
 * Пользователь может просматривать записи из таблиц: Доходы, Склады, Заказы, Продажи.
